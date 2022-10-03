@@ -40,7 +40,7 @@ custom:
   customDomain:
     rest:
       domainName: ${file(ServerlessScripts.js):domainName}
-      basePath: dynamodb
+      basePath: register
 
 package:
   individually: true
