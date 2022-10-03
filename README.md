@@ -8,7 +8,7 @@
 
 - Config aws credentials
 - Set stack name, profile and domain in ServerlessScripts.js
-- module.exports.stackName = () => 'serverless-nestjs-without-http';
+- module.exports.stackName = () => 'serverless-nestjs-dynamodb';
 - module.exports.profile = () => `profile_${this.stage()}`;
 - module.exports.domainName = () => `api-${this.stage()}.domain.com`;
 

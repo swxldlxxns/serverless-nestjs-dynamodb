@@ -1,0 +1,99 @@
+service: ${file(ServerlessScripts.js):stackName}-stack
+
+plugins:
+  - serverless-plugin-log-retention
+  - serverless-plugin-split-stacks
+  - serverless-domain-manager
+  - serverless-prune-plugin
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: ${file(ServerlessScripts.js):stage}
+  region: ${file(ServerlessScripts.js):region}
+  profile: ${file(ServerlessScripts.js):profile}
+  logRetentionInDays: ${file(ServerlessScripts.js):logRetentionInDays}
+  timeout: 29
+  environment:
+    NODE_PATH: ${file(ServerlessScripts.js):nodePath}
+    ACCOUNT_ID: ${aws:accountId}
+    STAGE: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    TABLE_A: ${self:resources.Resources.tableA.Properties.TableName}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource: '*'
+custom:
+  modulesLayer: ${self:service}-${self:provider.stage}-modules
+  srcLayer: ${self:service}-${self:provider.stage}-src
+  prune:
+    automatic: true
+    includeLayers: true
+  splitStacks:
+    perFunction: true
+    perType: false
+    perGroupFunction: false
+  customDomain:
+    rest:
+      domainName: ${file(ServerlessScripts.js):domainName}
+      basePath: dynamodb
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+layers:
+  modules:
+    name: ${self:custom.modulesLayer}
+    path: layers/modules
+    compatibleRuntimes:
+      - nodejs16.x
+  src:
+    name: ${self:custom.srcLayer}
+    path: layers/src
+    compatibleRuntimes:
+      - nodejs16.x
+
+functions:
+  create:
+    handler: dist/handlers/create/main.handler
+    package:
+      patterns:
+        - '!*/**'
+        - 'dist/handlers/create/**'
+    layers:
+      - !Ref ModulesLambdaLayer
+      - !Ref SrcLambdaLayer
+    events:
+      - http:
+          method: post
+          path: /
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+resources:
+  Resources:
+    tableA:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${self:provider.stage}-table-a
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
