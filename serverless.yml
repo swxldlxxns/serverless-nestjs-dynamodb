@@ -63,7 +63,7 @@ functions:
     handler: dist/handlers/create/main.handler
     package:
       patterns:
-        - '!*/**'
+        - '!**'
         - 'dist/handlers/create/**'
     layers:
       - !Ref ModulesLambdaLayer
