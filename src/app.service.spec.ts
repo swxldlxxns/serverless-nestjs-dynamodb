@@ -1,10 +1,13 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { DynamoDB } from 'aws-sdk';
 import { v4 as idV4 } from 'uuid';
 
 import { AppService } from '/opt/src/app.service';
+import { CreateRequestsDto } from '/opt/src/libs/dtos/requests/create-requests.dto';
 import { TableAInterface } from '/opt/src/libs/interfaces/dynamodb/tablea.interface';
-import { CreateRequestsDto } from '/opt/src/libs/interfaces/request/create-requests.dto';
 import { DynamodbService } from '/opt/src/libs/services/dynamodb.service';
+import { DYNAMODB } from '/opt/src/libs/shared/injectables';
 import { errorResponse, formatResponse } from '/opt/src/libs/utils';
 
 const SERVICE_NAME = 'AppService';
@@ -23,8 +26,27 @@ describe('AppService', () => {
   beforeEach(async () => {
     global.console = require('console');
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AppService, DynamodbService],
+      providers: [
+        AppService,
+        DynamodbService,
+        {
+          provide: ConfigService,
+          useFactory: () => ({
+            get: () => ({
+              accountId: process.env.ACCOUNT_ID,
+              stage: process.env.STAGE,
+              region: process.env.REGION,
+              tableA: process.env.TABLE_A,
+            }),
+          }),
+        },
+        {
+          provide: DYNAMODB,
+          useValue: DynamoDB.DocumentClient,
+        },
+      ],
     }).compile();
+
     service = module.get<AppService>(AppService);
     dynamoService = module.get<DynamodbService>(DynamodbService);
   });

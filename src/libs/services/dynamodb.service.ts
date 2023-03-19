@@ -1,19 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DynamoDB } from 'aws-sdk';
 
-import { ENV_VARS } from '/opt/src/libs/shared/enviroments';
+import { DYNAMODB } from '/opt/src/libs/shared/injectables';
+import { log } from '/opt/src/libs/utils';
 
 const SERVICE_NAME = 'DynamodbService';
-const { region } = ENV_VARS;
-const dynamodb = new DynamoDB.DocumentClient({
-  region,
-  apiVersion: 'latest',
-});
 
 @Injectable()
 export class DynamodbService {
+  constructor(
+    @Inject(DYNAMODB) private readonly _dynamodb: DynamoDB.DocumentClient,
+  ) {}
+
   async putItem<T>(Item: T, TableName: string): Promise<boolean> {
-    console.log({
+    log('INFO', {
       SERVICE_NAME,
       params: {
         TableName,
@@ -21,23 +21,25 @@ export class DynamodbService {
       },
     });
 
-    await dynamodb
+    await this._dynamodb
       .put({
         TableName,
         Item,
       })
       .promise();
+
     return true;
   }
 
   async getItemById<T>(Key: object, TableName: string): Promise<T> {
-    const value = await dynamodb
+    const value = await this._dynamodb
       .get({
         TableName,
         Key,
         ConsistentRead: true,
       })
       .promise();
+
     return <T>value.Item;
   }
 }
