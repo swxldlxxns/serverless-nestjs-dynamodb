@@ -1,6 +1,6 @@
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigType } from '@nestjs/config';
-import { DynamoDB } from 'aws-sdk';
 
 import { AppService } from '/opt/src/app.service';
 import config from '/opt/src/config';
@@ -23,7 +23,7 @@ const apiVersion = 'latest';
       provide: DYNAMODB,
       inject: [config.KEY],
       useFactory: ({ region }: ConfigType<typeof config>) =>
-        new DynamoDB.DocumentClient({
+        new DynamoDB({
           apiVersion,
           region,
         }),

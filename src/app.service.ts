@@ -33,7 +33,7 @@ export class AppService {
     try {
       const id: string = idV4();
 
-      await this._dynamoService.putItem<TableAInterface>(
+      await this._dynamoService.putItem(
         {
           id,
           name,
