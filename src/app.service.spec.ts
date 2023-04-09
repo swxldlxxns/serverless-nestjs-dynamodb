@@ -1,6 +1,7 @@
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import { PutItemCommandOutput } from '@aws-sdk/client-dynamodb/dist-types/commands/PutItemCommand';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DynamoDB } from 'aws-sdk';
 import { v4 as idV4 } from 'uuid';
 
 import { AppService } from '/opt/src/app.service';
@@ -42,7 +43,7 @@ describe('AppService', () => {
         },
         {
           provide: DYNAMODB,
-          useValue: DynamoDB.DocumentClient,
+          useValue: DynamoDB,
         },
       ],
     }).compile();
@@ -59,7 +60,10 @@ describe('AppService', () => {
   it('should return new user', async () => {
     jest
       .spyOn(dynamoService, 'putItem')
-      .mockImplementation(async (): Promise<boolean> => Promise.resolve(true));
+      .mockImplementation(
+        async (): Promise<PutItemCommandOutput> =>
+          Promise.resolve({ $metadata: {} }),
+      );
     jest
       .spyOn(dynamoService, 'getItemById')
       .mockImplementation(

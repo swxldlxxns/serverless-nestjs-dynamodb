@@ -1,6 +1,7 @@
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import { marshall } from '@aws-sdk/util-dynamodb';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DynamoDB } from 'aws-sdk';
 import { v4 as idV4 } from 'uuid';
 
 import { TableAInterface } from '/opt/src/libs/interfaces/dynamodb/tablea.interface';
@@ -16,7 +17,7 @@ describe('DynamodbService', () => {
     surname: 'test',
   };
   let service: DynamodbService;
-  let dynamodb: DynamoDB.DocumentClient;
+  let dynamodb: DynamoDB;
 
   beforeEach(async () => {
     global.console = require('console');
@@ -36,28 +37,26 @@ describe('DynamodbService', () => {
         },
         {
           provide: DYNAMODB,
-          useValue: DynamoDB.DocumentClient,
+          useValue: DynamoDB,
         },
       ],
     }).compile();
 
     service = MODULE.get<DynamodbService>(DynamodbService);
-    dynamodb = MODULE.get<DynamoDB.DocumentClient>(DYNAMODB);
+    dynamodb = MODULE.get<DynamoDB>(DYNAMODB);
   });
 
   it('should return new item', async () => {
-    dynamodb.put = jest.fn().mockImplementation(() => ({
-      promise: jest.fn().mockResolvedValue(tableAItem),
-    }));
+    dynamodb.putItem = jest.fn().mockResolvedValue(tableAItem);
     expect(
       await service.putItem({ name: 'test', surname: 'test' }, tableName),
     ).toBeTruthy();
   });
 
   it('should return get item', async () => {
-    dynamodb.get = jest.fn().mockImplementation(() => ({
-      promise: jest.fn().mockResolvedValue({ Item: tableAItem }),
-    }));
+    dynamodb.getItem = jest
+      .fn()
+      .mockResolvedValue({ Item: marshall(tableAItem) });
     expect(await service.getItemById({ id }, tableName)).toEqual(tableAItem);
   });
 });
